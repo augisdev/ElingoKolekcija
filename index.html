@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kolekcija">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.png">
+  <title>Kolekcija</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #FAF8F4;
+      --surface:  #FFFFFF;
+      --surface2: #F4F1EB;
+      --border:   #E6E1D6;
+      --text:     #1C1A16;
+      --text2:    #6B6459;
+      --text3:    #A39B8F;
+      --primary:  #2D5016;
+      --primary2: #3A6B1E;
+      --accent:   #C8963A;
+      --danger:   #B03020;
+      --radius:   14px;
+      --radius-s: 8px;
+      --shadow:   0 2px 12px rgba(28,26,22,.08);
+      --shadow-l: 0 8px 28px rgba(28,26,22,.13);
+      --ease:     .2s ease;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.5;
+      -webkit-font-smoothing: antialiased; }
+
+    /* ── LAYOUT ── */
+    #app { min-height: 100%; max-width: 640px; margin: 0 auto; }
+
+    .view { display: none; min-height: 100vh; padding-bottom: 88px; }
+    .view.active { display: block; }
+
+    /* ── HEADER ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,248,244,.93);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .topbar-title {
+      flex: 1; font-family: 'Playfair Display', serif;
+      font-size: 19px; font-weight: 600;
+    }
+    .topbar-sub { font-size: 11px; font-weight: 400; color: var(--text3);
+      font-family: 'DM Sans', sans-serif; display: block; }
+    .icon-btn {
+      width: 38px; height: 38px; border-radius: 10px; border: none;
+      background: var(--surface2); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; transition: var(--ease); flex-shrink: 0;
+    }
+    .icon-btn:hover { background: var(--border); color: var(--text); }
+    .icon-btn:active { transform: scale(.94); }
+
+    /* ── HOME ── */
+    .home-head { padding: 28px 20px 12px; }
+    .home-title { font-family: 'Playfair Display', serif; font-size: 34px;
+      font-weight: 600; line-height: 1.15; }
+    .home-sub { color: var(--text3); font-size: 13px; margin-top: 5px; }
+
+    .home-actions { display: flex; gap: 8px; padding: 0 20px 20px; flex-wrap: wrap; }
+    .pill-btn {
+      height: 34px; padding: 0 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-family: 'DM Sans', sans-serif;
+      font-weight: 500; cursor: pointer; transition: var(--ease);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .pill-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* ── CATEGORIES GRID ── */
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+    @media (min-width: 460px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .cat-card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 20px 16px 16px; border: 1.5px solid var(--border);
+      cursor: pointer; transition: var(--ease); position: relative; overflow: hidden;
+    }
+    .cat-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--cat-color, var(--primary));
+    }
+    .cat-card:hover { border-color: var(--cat-color,var(--primary));
+      box-shadow: var(--shadow-l); transform: translateY(-2px); }
+    .cat-card:active { transform: scale(.97); }
+    .cat-icon { font-size: 30px; margin-bottom: 10px; display: block; line-height: 1; }
+    .cat-name { font-family: 'Playfair Display', serif; font-size: 15px;
+      font-weight: 600; margin-bottom: 8px; }
+    .cat-count { font-size: 11px; color: var(--text3); }
+    .cat-count strong { color: var(--cat-color, var(--primary));
+      font-size: 22px; font-family: 'Playfair Display', serif;
+      font-weight: 600; display: block; line-height: 1; margin-bottom: 2px; }
+
+    .add-cat-card {
+      background: transparent; border: 1.5px dashed var(--border);
+      border-radius: var(--radius); padding: 20px 16px;
+      cursor: pointer; transition: var(--ease);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      min-height: 130px; color: var(--text3); font-size: 13px;
+    }
+    .add-cat-card:hover { border-color: var(--primary); color: var(--primary);
+      background: rgba(45,80,22,.03); }
+    .add-cat-card .plus-sign { font-size: 28px; line-height: 1; }
+
+    /* ── ITEMS ── */
+    .items-grid { display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; padding: 12px 16px; }
+    @media (min-width: 460px) { .items-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .item-card { background: var(--surface); border-radius: var(--radius);
+      border: 1.5px solid var(--border); overflow: hidden; cursor: pointer;
+      transition: var(--ease); }
+    .item-card:hover { box-shadow: var(--shadow-l); transform: translateY(-2px); }
+    .item-card:active { transform: scale(.97); }
+    .item-thumb { width: 100%; aspect-ratio: 4/3; object-fit: cover;
+      background: var(--surface2); display: flex; align-items: center;
+      justify-content: center; font-size: 30px; color: var(--text3); }
+    .item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .item-body { padding: 10px 12px; }
+    .item-title { font-family: 'Playfair Display', serif; font-size: 13px;
+      font-weight: 600; margin-bottom: 3px;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; }
+    .item-sub { font-size: 11px; color: var(--text3);
+      display: -webkit-box; -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical; overflow: hidden; }
+    .item-stars { margin-top: 5px; font-size: 11px; }
+
+    /* ── EMPTY ── */
+    .empty { text-align: center; padding: 64px 24px; color: var(--text3);
+      grid-column: 1 / -1; }
+    .empty-ico { font-size: 52px; margin-bottom: 16px; }
+    .empty h3 { font-family: 'Playfair Display', serif; font-size: 21px;
+      color: var(--text2); margin-bottom: 8px; }
+    .empty p { font-size: 13px; }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 24px; right: 20px;
+      width: 54px; height: 54px; border-radius: 15px;
+      background: var(--primary); color: #fff; border: none;
+      font-size: 26px; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(45,80,22,.45);
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--ease); z-index: 50;
+    }
+    .fab:hover { background: var(--primary2); transform: scale(1.06); }
+    .fab:active { transform: scale(.94); }
+
+    /* ── FORM ── */
+    .form-wrap { padding: 20px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 11px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: .7px;
+      color: var(--text3); margin-bottom: 7px; }
+    .form-input, .form-textarea, .form-select {
+      width: 100%; padding: 11px 13px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-s);
+      background: var(--surface); color: var(--text);
+      font-size: 15px; font-family: 'DM Sans', sans-serif;
+      transition: var(--ease); outline: none; appearance: none;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--primary); }
+    .form-textarea { min-height: 96px; resize: vertical; }
+
+    /* ── STARS ── */
+    .star-row { display: flex; gap: 5px; }
+    .star { font-size: 30px; cursor: pointer; transition: var(--ease);
+      color: var(--border); line-height: 1; user-select: none; }
+    .star.on { color: var(--accent); }
+    .star:hover { transform: scale(1.2); }
+
+    /* ── PHOTO UPLOAD ── */
+    .photo-drop { border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: var(--ease); position: relative; }
+    .photo-drop:hover { border-color: var(--primary); }
+    .photo-drop input { position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .photo-drop-ico { font-size: 30px; margin-bottom: 6px; }
+    .photo-drop-txt { font-size: 13px; color: var(--text3); }
+    .photo-preview { width: 100%; border-radius: var(--radius-s);
+      margin-top: 12px; max-height: 220px; object-fit: cover; display: block; }
+    .remove-photo-btn { margin-top: 8px; font-size: 12px; color: var(--danger);
+      background: none; border: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+
+    /* ── BUTTONS ── */
+    .btn-primary { width: 100%; height: 48px; background: var(--primary); color: #fff;
+      border: none; border-radius: var(--radius-s); font-size: 15px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; transition: var(--ease); }
+    .btn-primary:hover { background: var(--primary2); }
+    .btn-primary:active { transform: scale(.98); }
+
+    .btn-outline { width: 100%; height: 48px; background: transparent;
+      color: var(--text2); border: 1.5px solid var(--border); border-radius: var(--radius-s);
+      font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; transition: var(--ease); margin-top: 10px; }
+    .btn-outline:hover { border-color: var(--text2); color: var(--text); }
+
+    .btn-danger { width: 100%; height: 48px; background: transparent;
+      color: var(--danger); border: 1.5px solid rgba(176,48,32,.28);
+      border-radius: var(--radius-s); font-size: 15px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; transition: var(--ease); margin-top: 10px; }
+    .btn-danger:hover { background: rgba(176,48,32,.05); }
+
+    /* ── DETAIL ── */
+    .detail-photo { width: 100%; max-height: 300px; object-fit: cover; display: block; }
+    .detail-body { padding: 20px; }
+    .detail-title { font-family: 'Playfair Display', serif;
+      font-size: 26px; font-weight: 600; margin-bottom: 20px; line-height: 1.2; }
+    .detail-field { padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .detail-field:last-of-type { border-bottom: none; }
+    .detail-field-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--text3); margin-bottom: 3px; }
+    .detail-field-val { font-size: 15px; color: var(--text); white-space: pre-wrap; }
+
+    /* ── CATEGORY FORM ── */
+    .fields-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .field-item { background: var(--surface2); border-radius: var(--radius-s);
+      padding: 11px 13px; display: flex; align-items: center; gap: 10px;
+      border: 1.5px solid transparent; }
+    .field-item:hover { border-color: var(--border); }
+    .field-item-info { flex: 1; }
+    .field-item-name { font-size: 14px; font-weight: 500; }
+    .field-item-type { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* ── ICON PICKER ── */
+    .icon-preview { font-size: 44px; text-align: center; margin-bottom: 10px;
+      line-height: 1; }
+    .icon-grid { display: grid; grid-template-columns: repeat(8, 1fr);
+      gap: 5px; max-height: 192px; overflow-y: auto;
+      padding: 8px; background: var(--surface2); border-radius: var(--radius-s); }
+    .icon-opt { font-size: 22px; width: 38px; height: 38px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: var(--ease); border: 2px solid transparent; }
+    .icon-opt:hover { background: var(--border); }
+    .icon-opt.sel { border-color: var(--primary); background: rgba(45,80,22,.1); }
+
+    /* ── COLOR PICKER ── */
+    .color-row { display: flex; gap: 9px; flex-wrap: wrap; }
+    .color-opt { width: 30px; height: 30px; border-radius: 8px;
+      cursor: pointer; transition: var(--ease); border: 3px solid transparent; flex-shrink: 0; }
+    .color-opt:hover { transform: scale(1.1); }
+    .color-opt.sel { border-color: var(--text); transform: scale(1.12); }
+
+    /* ── FIELD TYPE GRID ── */
+    .ftype-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ftype-btn { padding: 11px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-s); background: var(--surface);
+      cursor: pointer; text-align: left; transition: var(--ease); }
+    .ftype-btn:hover, .ftype-btn.sel { border-color: var(--primary);
+      background: rgba(45,80,22,.05); }
+    .ftype-btn .fi { font-size: 19px; margin-bottom: 3px; }
+    .ftype-btn .fn { font-size: 13px; font-weight: 500; color: var(--text); }
+    .ftype-btn .fd { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* ── SEARCH ── */
+    .search-wrap { padding: 10px 16px 2px; }
+    .search-box { position: relative; }
+    .search-box input { width: 100%; padding: 9px 13px 9px 36px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: var(--surface); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; outline: none; transition: var(--ease); }
+    .search-box input:focus { border-color: var(--primary); }
+    .search-box::before { content: '🔍'; position: absolute;
+      left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+
+    /* ── MODAL ── */
+    .overlay { position: fixed; inset: 0; background: rgba(28,26,22,.55);
+      backdrop-filter: blur(4px); z-index: 200;
+      display: flex; align-items: flex-end; justify-content: center; }
+    .overlay.hidden { display: none; }
+    .modal { background: var(--surface); border-radius: 20px 20px 0 0;
+      padding: 20px 20px 32px; width: 100%; max-width: 640px;
+      max-height: 85vh; overflow-y: auto; animation: slideUp .28s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle { width: 38px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 0 auto 18px; }
+    .modal-title { font-family: 'Playfair Display', serif; font-size: 19px;
+      font-weight: 600; margin-bottom: 18px; }
+
+    /* ── CHECKBOX ── */
+    .check-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .check-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+    .check-row label { font-size: 14px; cursor: pointer; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 88px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--text); color: #fff;
+      padding: 9px 18px; border-radius: 10px; font-size: 13px;
+      opacity: 0; transition: all .28s ease; z-index: 400;
+      pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── SECTION LABEL ── */
+    .sec-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text3); padding: 16px 16px 6px; }
+
+    .gap-10 { height: 10px; }
+
+    /* ── SORT BAR ── */
+    .sort-bar { display: flex; gap: 6px; padding: 8px 16px 4px; overflow-x: auto;
+      scrollbar-width: none; }
+    .sort-bar::-webkit-scrollbar { display: none; }
+    .sort-chip { height: 30px; padding: 0 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-family: 'DM Sans',sans-serif;
+      font-weight: 500; cursor: pointer; transition: var(--ease);
+      white-space: nowrap; flex-shrink: 0; }
+    .sort-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════ HOME ═══════════ -->
+  <div id="view-home" class="view active">
+    <div class="home-head">
+      <h1 class="home-title">Mano<br>kolekcija</h1>
+      <p class="home-sub" id="home-sub">Kraunama…</p>
+    </div>
+    <div class="home-actions">
+      <button class="pill-btn" onclick="exportData()">📤 Eksportuoti</button>
+      <button class="pill-btn" onclick="triggerImport()">📥 Importuoti</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- ═══════════ ITEMS ═══════════ -->
+  <div id="view-items" class="view">
+    <div class="topbar">
+      <button class="icon-btn" onclick="showView('home')">←</button>
+      <div class="topbar-title">
+        <span id="i-cat-icon"></span> <span id="i-cat-name"></span>
+        <span class="topbar-sub" id="i-cat-count"></span>
+      </div>
+      <button class="icon-btn" onclick="editCurrentCat()">✏️</button>
+    </div>
+    <div class="search-wrap"><div class="search-box">
+      <input type="text" id="items-q" placeholder="Ieškoti…" oninput="renderItems()">
+    </div></div>
+    <div class="sort-bar" id="sort-bar"></div>
+    <div class="items-grid" id="items-grid"></div>
+    <button class="fab" onclick="showAddItem()">＋</button>
+  </div>
+
+  <!-- ═══════════ DETAIL ═══════════ -->
+  <div id="view-detail" class="view">
+    <div class="topbar">
+      <button class="icon-btn" onclick="showView('items')">←</button>
+      <div class="topbar-title" id="d-cat-lbl">Įrašas</div>
+      <button class="icon-btn" onclick="editCurrentItem()">✏️</button>
+    </div>
+    <img id="d-photo" class="detail-photo" style="display:none" alt="">
+    <div class="detail-body">
+      <h2 class="detail-title" id="d-title"></h2>
+      <div id="d-fields"></div>
+      <div class="gap-10"></div>
+      <button class="btn-danger" onclick="deleteCurrentItem()">🗑 Ištrinti įrašą</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ ITEM FORM ═══════════ -->
+  <div id="view-item-form" class="view">
+    <div class="topbar">
+      <button class="icon-btn" onclick="backItemForm()">←</button>
+      <div class="topbar-title" id="if-title">Naujas įrašas</div>
+    </div>
+    <div class="form-wrap">
+      <div id="if-fields"></div>
+      <button class="btn-primary" onclick="saveItem()">Išsaugoti</button>
+      <button class="btn-outline" onclick="backItemForm()">Atšaukti</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ CATEGORY FORM ═══════════ -->
+  <div id="view-cat-form" class="view">
+    <div class="topbar">
+      <button class="icon-btn" onclick="backCatForm()">←</button>
+      <div class="topbar-title" id="cf-title">Nauja kategorija</div>
+    </div>
+    <div class="form-wrap">
+
+      <div class="form-group">
+        <label class="form-label">Pavadinimas</label>
+        <input type="text" class="form-input" id="cf-name" placeholder="pvz. Knygos">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ikona</label>
+        <div class="icon-preview" id="cf-icon-preview">📁</div>
+        <div class="icon-grid" id="cf-icon-grid"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Spalva</label>
+        <div class="color-row" id="cf-color-row"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Laukai</label>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:12px">
+          Pirmas laukas bus pavadinimas kortelėje.</p>
+        <div class="fields-list" id="cf-fields-list"></div>
+        <button class="pill-btn" style="width:100%;justify-content:center;height:40px"
+          onclick="showAddFieldModal()">＋ Pridėti lauką</button>
+      </div>
+
+      <button class="btn-primary" onclick="saveCat()">Išsaugoti kategoriją</button>
+      <button class="btn-outline" onclick="backCatForm()">Atšaukti</button>
+      <button class="btn-danger" id="cf-del-btn" onclick="deleteCurrentCat()"
+        style="display:none">🗑 Ištrinti kategoriją</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ═══════════ ADD FIELD MODAL ═══════════ -->
+<div class="overlay hidden" id="modal-field" onclick="closeModal('modal-field')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Naujas laukas</div>
+    <div class="form-group">
+      <label class="form-label">Pavadinimas</label>
+      <input type="text" class="form-input" id="mf-name" placeholder="pvz. Autorius">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipas</label>
+      <div class="ftype-grid" id="mf-types"></div>
+    </div>
+    <div class="check-row">
+      <input type="checkbox" id="mf-req">
+      <label for="mf-req">Privalomas laukas</label>
+    </div>
+    <button class="btn-primary" style="margin-top:20px" onclick="addField()">Pridėti</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATABASE HELPERS
+════════════════════════════════════════════ */
+let DB;
+function initDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('kolekcija_v1',3);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('categories'))
+        d.createObjectStore('categories',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('items')){
+        const s=d.createObjectStore('items',{keyPath:'id',autoIncrement:true});
+        s.createIndex('categoryId','categoryId',{unique:false});
+      }
+    };
+    r.onsuccess=e=>{ DB=e.target.result; res(); };
+    r.onerror=()=>rej(r.error);
+  });
+}
+const tx=(store,mode='readonly')=>DB.transaction(store,mode).objectStore(store);
+const dbGet=(s,id)=>new Promise((res,rej)=>{ const r=tx(s).get(id); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const dbAll=(s)=>new Promise((res,rej)=>{ const r=tx(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const dbByIdx=(s,idx,val)=>new Promise((res,rej)=>{ const r=tx(s).index(idx).getAll(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const dbPut=(s,obj)=>new Promise((res,rej)=>{ const r=tx(s,'readwrite').put(obj); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const dbDel=(s,id)=>new Promise((res,rej)=>{ const r=tx(s,'readwrite').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); });
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let curCatId=null, curItemId=null, editCatId=null, editItemId=null;
+let cfFields=[], cfIcon='📁', cfColor='#2D5016', selFieldType='text';
+let sortField=null, sortDir=1;
+
+/* ════════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════════ */
+const ICONS=['📚','💎','🎨','🎵','🎬','🏋️','🌿','🍷','✈️','🐾','📷','🧩',
+  '⚽','🎯','🎪','🏺','🧸','🪴','🔮','⭐','🎁','🪆','🎭','🧶','🎀','🪅',
+  '🌟','🏆','🦋','🌺','🍀','🎲','🃏','🧿','🔑','📝','💌','🗺️','🧭','🌙',
+  '🦋','🌊','⛰️','🏡','🎻','🎺','🥂','🍾','🌸','🎋'];
+
+const COLORS=['#2D5016','#1A5276','#6C3483','#784212','#922B21','#1A6B5A',
+  '#7D6608','#1F618D','#117A65','#E74C3C','#8E44AD','#D35400',
+  '#2471A3','#1ABC9C','#B7950B','#717D7E'];
+
+const FTYPES=[
+  {type:'text',   icon:'✏️', name:'Tekstas',     desc:'Trumpas tekstas'},
+  {type:'textarea',icon:'📄',name:'Ilgas tekstas',desc:'Pastabos, aprašymas'},
+  {type:'number', icon:'🔢', name:'Skaičius',     desc:'Kiekis, metai…'},
+  {type:'date',   icon:'📅', name:'Data',         desc:'Kalendoriaus data'},
+  {type:'rating', icon:'⭐', name:'Įvertinimas',  desc:'1–5 žvaigžd.'},
+  {type:'photo',  icon:'📷', name:'Nuotrauka',    desc:'Viena nuotrauka'},
+];
+
+const DEFAULT_CATS=[
+  { name:'Knygos', icon:'📚', color:'#2D5016',
+    fields:[
+      {id:'title',  name:'Pavadinimas',  type:'text',    required:true},
+      {id:'author', name:'Autorius',     type:'text',    required:false},
+      {id:'year',   name:'Metai',        type:'number',  required:false},
+      {id:'rating', name:'Įvertinimas',  type:'rating',  required:false},
+      {id:'notes',  name:'Pastabos',     type:'textarea',required:false},
+      {id:'photo',  name:'Nuotrauka',    type:'photo',   required:false},
+    ]},
+  { name:'Deimantų dėlionės', icon:'💎', color:'#1A5276',
+    fields:[
+      {id:'title',  name:'Pavadinimas',        type:'text',    required:true},
+      {id:'size',   name:'Dydis',              type:'text',    required:false},
+      {id:'placed', name:'Sudėtų deimantų sk.',type:'number',  required:false},
+      {id:'date',   name:'Data',               type:'date',    required:false},
+      {id:'photo',  name:'Nuotrauka',          type:'photo',   required:false},
+      {id:'notes',  name:'Pastabos',           type:'textarea',required:false},
+    ]},
+];
+
+/* ════════════════════════════════════════════
+   VIEWS
+════════════════════════════════════════════ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ════════════════════════════════════════════
+   HOME
+════════════════════════════════════════════ */
+async function renderHome(){
+  const cats=await dbAll('categories');
+  const grid=document.getElementById('cat-grid');
+  let total=0;
+  const counts={};
+  for(const c of cats){ const it=await dbByIdx('items','categoryId',c.id); counts[c.id]=it.length; total+=it.length; }
+
+  const pl=n=>n===1?'a':n%10>=2&&n%10<=9&&!(n%100>=11&&n%100<=19)?'os':'ų';
+  document.getElementById('home-sub').textContent=
+    `${cats.length} kategorij${pl(cats.length)} · ${total} įrašų`;
+
+  grid.innerHTML=cats.map(c=>`
+    <div class="cat-card" style="--cat-color:${c.color}" onclick="openCat(${c.id})">
+      <span class="cat-icon">${c.icon}</span>
+      <div class="cat-name">${esc(c.name)}</div>
+      <div class="cat-count"><strong>${counts[c.id]}</strong>įrašų</div>
+    </div>`).join('')+`
+    <div class="add-cat-card" onclick="showAddCat()">
+      <span class="plus-sign">＋</span>
+      <span>Nauja kategorija</span>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════
+   CATEGORY / ITEMS LIST
+════════════════════════════════════════════ */
+async function openCat(id){
+  curCatId=id; sortField=null; sortDir=1;
+  const c=await dbGet('categories',id);
+  document.getElementById('i-cat-icon').textContent=c.icon;
+  document.getElementById('i-cat-name').textContent=c.name;
+  document.getElementById('items-q').value='';
+  buildSortBar(c);
+  showView('items');
+  await renderItems();
+}
+
+async function buildSortBar(cat){
+  const bar=document.getElementById('sort-bar');
+  const sortable=cat.fields.filter(f=>f.type!=='photo'&&f.type!=='textarea');
+  bar.innerHTML=sortable.map(f=>`
+    <button class="sort-chip ${sortField===f.id?'active':''}"
+      onclick="toggleSort('${f.id}')">${f.name}</button>`).join('');
+}
+
+function toggleSort(fid){
+  if(sortField===fid) sortDir*=-1; else { sortField=fid; sortDir=1; }
+  document.querySelectorAll('.sort-chip').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===
+      (curCatId?null:null));
+  });
+  // rebuild chips
+  dbGet('categories',curCatId).then(buildSortBar);
+  renderItems();
+}
+
+async function renderItems(){
+  const cat=await dbGet('categories',curCatId);
+  let items=await dbByIdx('items','categoryId',curCatId);
+  const q=document.getElementById('items-q').value.trim().toLowerCase();
+  const tf=cat.fields[0];
+
+  if(q) items=items.filter(it=>(it.data[tf.id]||'').toLowerCase().includes(q));
+
+  if(sortField){
+    items.sort((a,b)=>{
+      const av=a.data[sortField]??'', bv=b.data[sortField]??'';
+      if(typeof av==='number'&&typeof bv==='number') return sortDir*(av-bv);
+      return sortDir*String(av).localeCompare(String(bv),'lt');
+    });
+  } else {
+    items.sort((a,b)=>b.createdAt-a.createdAt);
+  }
+
+  document.getElementById('i-cat-count').textContent=items.length+' įrašų';
+  // rebuild sort bar highlight
+  document.querySelectorAll('.sort-chip').forEach(b=>{
+    const fid=cat.fields.find(f=>f.name===b.textContent.trim())?.id;
+    b.classList.toggle('active',fid===sortField);
+    if(fid===sortField) b.textContent=b.textContent.replace(/[↑↓]/g,'')+(sortDir>0?' ↑':' ↓');
+  });
+
+  const pf=cat.fields.find(f=>f.type==='photo');
+  const rf=cat.fields.find(f=>f.type==='rating');
+  const sf=cat.fields[1];
+  const grid=document.getElementById('items-grid');
+
+  if(!items.length){
+    grid.innerHTML=`<div class="empty">
+      <div class="empty-ico">${cat.icon}</div>
+      <h3>${q?'Nerasta':'Dar tuščia'}</h3>
+      <p>${q?'Pabandykite kitą žodį':'Paspauskite ＋ ir pridėkite pirmą įrašą'}</p></div>`;
+    return;
+  }
+
+  grid.innerHTML=items.map(it=>{
+    const title=it.data[tf.id]||'(be pavadinimo)';
+    const sub=sf&&it.data[sf.id]?it.data[sf.id]:'';
+    const stars=rf&&it.data[rf.id]?'⭐'.repeat(it.data[rf.id]):'';
+    const thumb=pf&&it.data[pf.id]
+      ?`<div class="item-thumb"><img src="${it.data[pf.id]}" alt="" loading="lazy"></div>`
+      :`<div class="item-thumb">${cat.icon}</div>`;
+    return `<div class="item-card" onclick="openItem(${it.id})">
+      ${thumb}
+      <div class="item-body">
+        <div class="item-title">${esc(title)}</div>
+        ${sub?`<div class="item-sub">${esc(String(sub))}</div>`:''}
+        ${stars?`<div class="item-stars">${stars}</div>`:''}
+      </div></div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════
+   ITEM DETAIL
+════════════════════════════════════════════ */
+async function openItem(id){
+  curItemId=id;
+  const it=await dbGet('items',id);
+  const cat=await dbGet('categories',it.categoryId);
+  const tf=cat.fields[0];
+  const title=it.data[tf.id]||'(be pavadinimo)';
+
+  document.getElementById('d-cat-lbl').textContent=cat.icon+' '+cat.name;
+  document.getElementById('d-title').textContent=title;
+
+  const pf=cat.fields.find(f=>f.type==='photo');
+  const ph=document.getElementById('d-photo');
+  if(pf&&it.data[pf.id]){ ph.src=it.data[pf.id]; ph.style.display='block'; }
+  else { ph.style.display='none'; ph.src=''; }
+
+  document.getElementById('d-fields').innerHTML=
+    cat.fields.filter(f=>f.type!=='photo').map(f=>{
+      const v=it.data[f.id];
+      if(v===undefined||v===null||v==='') return '';
+      const disp=f.type==='rating'?'⭐'.repeat(v)+` (${v}/5)`:esc(String(v));
+      return `<div class="detail-field">
+        <div class="detail-field-lbl">${esc(f.name)}</div>
+        <div class="detail-field-val">${disp}</div></div>`;
+    }).join('');
+
+  showView('detail');
+}
+
+function editCurrentItem(){ showEditItem(curItemId); }
+
+async function deleteCurrentItem(){
+  if(!confirm('Ištrinti šį įrašą?')) return;
+  await dbDel('items',curItemId);
+  toast('Įrašas ištrintas');
+  await renderItems();
+  showView('items');
+}
+
+/* ════════════════════════════════════════════
+   ITEM FORM
+════════════════════════════════════════════ */
+async function showAddItem(){
+  editItemId=null;
+  const cat=await dbGet('categories',curCatId);
+  document.getElementById('if-title').textContent='＋ Naujas įrašas';
+  buildItemForm(cat,null);
+  showView('item-form');
+}
+
+async function showEditItem(id){
+  editItemId=id;
+  const it=await dbGet('items',id);
+  const cat=await dbGet('categories',it.categoryId);
+  document.getElementById('if-title').textContent='Redaguoti';
+  buildItemForm(cat,it);
+  showView('item-form');
+}
+
+function buildItemForm(cat,item){
+  const wrap=document.getElementById('if-fields');
+  wrap.innerHTML='';
+  cat.fields.forEach(f=>{
+    const val=item?item.data[f.id]??'':'';
+    const g=document.createElement('div'); g.className='form-group';
+    const lb=document.createElement('label'); lb.className='form-label';
+    lb.textContent=f.name+(f.required?' *':'');
+    g.appendChild(lb);
+
+    if(f.type==='text'){
+      const el=inp('text',f,val); g.appendChild(el);
+    } else if(f.type==='textarea'){
+      const el=document.createElement('textarea');
+      el.className='form-textarea'; el.id='f_'+f.id; el.value=val;
+      g.appendChild(el);
+    } else if(f.type==='number'){
+      const el=inp('number',f,val); g.appendChild(el);
+    } else if(f.type==='date'){
+      const el=inp('date',f,val); g.appendChild(el);
+    } else if(f.type==='rating'){
+      const row=document.createElement('div');
+      row.className='star-row'; row.id='f_'+f.id; row.dataset.v=val||0;
+      for(let i=1;i<=5;i++){
+        const s=document.createElement('span');
+        s.className='star'+(i<=(val||0)?' on':'');
+        s.textContent='★';
+        s.onclick=()=>{
+          const cur=parseInt(row.dataset.v);
+          const nv=cur===i?0:i;
+          row.dataset.v=nv;
+          row.querySelectorAll('.star').forEach((x,xi)=>x.classList.toggle('on',xi<nv));
+        };
+        row.appendChild(s);
+      }
+      g.appendChild(row);
+    } else if(f.type==='photo'){
+      const drop=document.createElement('div');
+      drop.className='photo-drop'; drop.id='f_'+f.id; drop.dataset.v=val||'';
+      const fi=document.createElement('input');
+      fi.type='file'; fi.accept='image/*';
+      fi.onchange=e=>handlePhoto(e,drop);
+      const txt=document.createElement('div');
+      txt.innerHTML=`<div class="photo-drop-ico">📷</div><div class="photo-drop-txt">${val?'Pakeisti':'Pasirinkti'} nuotrauką</div>`;
+      drop.appendChild(fi); drop.appendChild(txt);
+      if(val){
+        const pv=document.createElement('img');
+        pv.src=val; pv.className='photo-preview'; drop.appendChild(pv);
+        const rb=document.createElement('button');
+        rb.type='button'; rb.className='remove-photo-btn';
+        rb.textContent='✕ Pašalinti nuotrauką';
+        rb.onclick=e=>{e.stopPropagation();drop.dataset.v='';pv.remove();rb.remove();
+          txt.querySelector('.photo-drop-txt').textContent='Pasirinkti nuotrauką';};
+        drop.appendChild(rb);
+      }
+      g.appendChild(drop);
+    }
+    wrap.appendChild(g);
+  });
+}
+
+function inp(type,field,val){
+  const el=document.createElement('input');
+  el.type=type; el.className='form-input'; el.id='f_'+field.id; el.value=val;
+  return el;
+}
+
+function handlePhoto(e,drop){
+  const file=e.target.files[0]; if(!file) return;
+  // Resize before storing
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1200;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){ const r=MAX/Math.max(w,h); w*=r; h*=r; }
+      const cv=document.createElement('canvas');
+      cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=cv.toDataURL('image/jpeg',0.82);
+      drop.dataset.v=dataUrl;
+      let pv=drop.querySelector('.photo-preview');
+      if(!pv){ pv=document.createElement('img'); pv.className='photo-preview'; drop.appendChild(pv); }
+      pv.src=dataUrl;
+      drop.querySelector('.photo-drop-txt').textContent='Pakeisti nuotrauką';
+      let rb=drop.querySelector('.remove-photo-btn');
+      if(!rb){
+        rb=document.createElement('button'); rb.type='button';
+        rb.className='remove-photo-btn'; rb.textContent='✕ Pašalinti nuotrauką';
+        rb.onclick=ev2=>{ev2.stopPropagation();drop.dataset.v='';pv.remove();rb.remove();
+          drop.querySelector('.photo-drop-txt').textContent='Pasirinkti nuotrauką';};
+        drop.appendChild(rb);
+      }
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveItem(){
+  const cat=await dbGet('categories',curCatId);
+  const data={};
+  for(const f of cat.fields){
+    const el=document.getElementById('f_'+f.id); if(!el) continue;
+    if(f.type==='rating'){
+      const v=parseInt(el.dataset.v)||0; if(v>0) data[f.id]=v;
+    } else if(f.type==='photo'){
+      if(el.dataset.v) data[f.id]=el.dataset.v;
+    } else if(f.type==='number'){
+      const v=el.value.trim(); if(v!=='') data[f.id]=parseFloat(v);
+    } else {
+      const v=el.value.trim(); if(v) data[f.id]=v;
+    }
+    if(f.required&&!data[f.id]&&data[f.id]!==0){
+      toast('Užpildykite: '+f.name); el.focus&&el.focus(); return;
+    }
+  }
+  if(editItemId){
+    const ex=await dbGet('items',editItemId);
+    await dbPut('items',{...ex,data,updatedAt:Date.now()});
+    toast('Išsaugota ✓');
+  } else {
+    await dbPut('items',{categoryId:curCatId,data,createdAt:Date.now(),updatedAt:Date.now()});
+    toast('Pridėta ✓');
+  }
+  await renderItems(); showView('items'); editItemId=null;
+}
+
+function backItemForm(){ editItemId=null; showView('items'); }
+
+/* ════════════════════════════════════════════
+   CATEGORY FORM
+════════════════════════════════════════════ */
+function showAddCat(){
+  editCatId=null;
+  cfFields=[{id:'f_'+Date.now(),name:'Pavadinimas',type:'text',required:true}];
+  cfIcon='📁'; cfColor=COLORS[0];
+  document.getElementById('cf-title').textContent='Nauja kategorija';
+  document.getElementById('cf-name').value='';
+  document.getElementById('cf-del-btn').style.display='none';
+  buildCatForm(); showView('cat-form');
+}
+
+async function editCurrentCat(){
+  const cat=await dbGet('categories',curCatId);
+  editCatId=curCatId;
+  cfFields=JSON.parse(JSON.stringify(cat.fields));
+  cfIcon=cat.icon; cfColor=cat.color;
+  document.getElementById('cf-title').textContent='Redaguoti kategoriją';
+  document.getElementById('cf-name').value=cat.name;
+  document.getElementById('cf-del-btn').style.display='block';
+  buildCatForm(); showView('cat-form');
+}
+
+function buildCatForm(){
+  // Icons
+  const ig=document.getElementById('cf-icon-grid');
+  ig.innerHTML=ICONS.map(i=>`<div class="icon-opt${i===cfIcon?' sel':''}" onclick="selIcon('${i}')">${i}</div>`).join('');
+  document.getElementById('cf-icon-preview').textContent=cfIcon;
+  // Colors
+  const cg=document.getElementById('cf-color-row');
+  cg.innerHTML=COLORS.map(c=>`<div class="color-opt${c===cfColor?' sel':''}" style="background:${c}" onclick="selColor('${c}')"></div>`).join('');
+  renderFieldsList();
+}
+
+function selIcon(i){
+  cfIcon=i; document.getElementById('cf-icon-preview').textContent=i;
+  document.querySelectorAll('.icon-opt').forEach(el=>el.classList.toggle('sel',el.textContent===i));
+}
+function selColor(c){
+  cfColor=c;
+  document.querySelectorAll('.color-opt').forEach(el=>{
+    const bg=el.style.backgroundColor||el.style.background;
+    el.classList.toggle('sel',bg===hexToRgb(c)||el.style.background===c||bg===c);
+  });
+  // simpler approach: rebuild
+  document.getElementById('cf-color-row').innerHTML=
+    COLORS.map(col=>`<div class="color-opt${col===c?' sel':''}" style="background:${col}" onclick="selColor('${col}')"></div>`).join('');
+}
+
+function renderFieldsList(){
+  document.getElementById('cf-fields-list').innerHTML=cfFields.map((f,i)=>`
+    <div class="field-item">
+      <span style="font-size:17px">${FTYPES.find(t=>t.type===f.type)?.icon||'✏️'}</span>
+      <div class="field-item-info">
+        <div class="field-item-name">${esc(f.name)}${f.required?' <span style="color:var(--danger)">*</span>':''}</div>
+        <div class="field-item-type">${FTYPES.find(t=>t.type===f.type)?.name||f.type}</div>
+      </div>
+      ${i>0?`<button class="icon-btn" style="font-size:13px" onclick="removeField(${i})">✕</button>`:''}
+    </div>`).join('');
+}
+
+function showAddFieldModal(){
+  selFieldType='text';
+  document.getElementById('mf-name').value='';
+  document.getElementById('mf-req').checked=false;
+  document.getElementById('mf-types').innerHTML=FTYPES.map(ft=>`
+    <div class="ftype-btn${ft.type==='text'?' sel':''}" onclick="pickFType('${ft.type}',this)">
+      <div class="fi">${ft.icon}</div>
+      <div class="fn">${ft.name}</div>
+      <div class="fd">${ft.desc}</div>
+    </div>`).join('');
+  document.getElementById('modal-field').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('mf-name').focus(),100);
+}
+
+function pickFType(type,el){
+  selFieldType=type;
+  document.querySelectorAll('.ftype-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+
+function addField(){
+  const name=document.getElementById('mf-name').value.trim();
+  if(!name){ toast('Įveskite lauko pavadinimą'); return; }
+  cfFields.push({id:'f_'+Date.now(),name,type:selFieldType,required:document.getElementById('mf-req').checked});
+  renderFieldsList();
+  closeModal('modal-field');
+  toast('Laukas pridėtas');
+}
+
+function removeField(i){ cfFields.splice(i,1); renderFieldsList(); }
+
+async function saveCat(){
+  const name=document.getElementById('cf-name').value.trim();
+  if(!name){ toast('Įveskite kategorijos pavadinimą'); return; }
+  if(!cfFields.length){ toast('Pridėkite bent vieną lauką'); return; }
+  const data={name,icon:cfIcon,color:cfColor,fields:cfFields,createdAt:Date.now()};
+  if(editCatId){
+    const ex=await dbGet('categories',editCatId);
+    await dbPut('categories',{...ex,...data,id:editCatId});
+    toast('Kategorija atnaujinta ✓');
+    await renderItems(); showView('items');
+  } else {
+    await dbPut('categories',data);
+    toast('Kategorija sukurta ✓');
+    await renderHome(); showView('home');
+  }
+  editCatId=null;
+}
+
+async function deleteCurrentCat(){
+  const items=await dbByIdx('items','categoryId',curCatId);
+  if(!confirm(items.length?`Ištrinti kategoriją ir ${items.length} įrašus?`:'Ištrinti šią kategoriją?')) return;
+  for(const it of items) await dbDel('items',it.id);
+  await dbDel('categories',curCatId);
+  toast('Kategorija ištrinta');
+  await renderHome(); showView('home');
+}
+
+function backCatForm(){ editCatId=null; showView(curCatId?'items':'home'); }
+
+/* ════════════════════════════════════════════
+   EXPORT / IMPORT
+════════════════════════════════════════════ */
+async function exportData(){
+  const categories=await dbAll('categories');
+  const items=await dbAll('items');
+  const blob=new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),categories,items},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='kolekcija_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); toast('Eksportuota ✓');
+}
+
+function triggerImport(){ document.getElementById('import-input').click(); }
+
+async function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  try{
+    const raw=JSON.parse(await file.text());
+    if(!raw.categories||!raw.items) throw new Error('bad format');
+    if(!confirm(`Importuoti ${raw.categories.length} kategorij. ir ${raw.items.length} įrašų?\nEsami duomenys išliks.`)) return;
+    for(const c of raw.categories) await dbPut('categories',c);
+    for(const i of raw.items) await dbPut('items',i);
+    await renderHome(); toast('Importuota ✓');
+  } catch(err){ toast('Klaida importuojant'); console.error(err); }
+  e.target.value='';
+}
+
+/* ════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hexToRgb(hex){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return `rgb(${r}, ${g}, ${b})`; }
+
+let _toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+async function init(){
+  await initDB();
+  // Insert defaults if empty
+  const cats=await dbAll('categories');
+  if(!cats.length) for(const c of DEFAULT_CATS) await dbPut('categories',{...c,createdAt:Date.now()});
+  await renderHome();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+init();
+</script>
+</body>
+</html>

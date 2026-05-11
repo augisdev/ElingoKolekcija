@@ -1,0 +1,14 @@
+{
+  "name": "Mano kolekcija",
+  "short_name": "Kolekcija",
+  "description": "Asmeninės kolekcijos sekimo programa",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FAF8F4",
+  "theme_color": "#2D5016",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
